@@ -125,7 +125,50 @@ tf.resource("azurerm_resource_group", "byvar", {
 - `type: ref("string")` keeps `string`/`list(string)` etc. as expression refs
   (`"${string}"` in JSON) rather than quoted literals.
 
-## 5. Emitting to files (author's own glue — not part of the library)
+## 5. Modules — local relative-path source
+
+```ts
+import { TfBuilder, emitJson } from "@wrmsoftware/tf-generator";
+
+const tf = new TfBuilder();
+
+const rg = tf.resource("azurerm_resource_group", "main", {
+  name: "rg-app",
+  location: "southeastasia",
+});
+
+const webApp = tf.module("web_app", {
+  source: "../modules/webapp",   // local relative path — the common real-world case
+  resource_group_name: rg.attr("name"),
+  location: rg.attr("location"),
+  app_name: "app-web",
+});
+
+tf.output("web_app_url", { value: webApp.attr("default_hostname") });
+
+console.log(emitJson(tf));
+```
+
+- `module(name, body)` returns an `Addressable`, exactly like `resource`/`data`.
+  `source` is just an ordinary key in `body` — any relative path (or registry string,
+  though registry sourcing isn't exercised by this milestone's example) works with no
+  special-case handling.
+- Multiple instances of the same module (the common real-world pattern — one module
+  call per tenant/region) use the same convention as example 3: loop in TypeScript
+  with stable, derived names, **not** a Terraform-native `for_each`/`count` on the
+  module block (that's deferred — see `_goal.md`):
+
+```ts
+const tenants = ["contoso", "fabrikam"];
+const webApps = tenants.map((t) =>
+  tf.module(`web_app_${t}`, {   // stable name, NOT index
+    source: "../modules/webapp",
+    app_name: `app-${t}`,
+  }),
+);
+```
+
+## 6. Emitting to files (author's own glue — not part of the library)
 
 The library returns strings; writing files is the caller's responsibility (Bun/Node):
 

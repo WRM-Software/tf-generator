@@ -45,10 +45,18 @@ Run these once before delegating any tasks — don't assume they work. Verified
 - **Dynamic blocks:** authored directly via a `dynamic` key in any body `TfObject` — no
   new value-model primitive needed, since Terraform's own JSON syntax already treats
   `dynamic` as literal structure (`{ dynamic: { <blockName>: { for_each, content,
-  iterator? } } }`). Covered by the flagship example and a unit test.
+  iterator? } } }`). Covered by the flagship example and a unit test. **Note:** the
+  `for_each` here is `dynamic`'s own — it drives repeated nested attribute blocks
+  *within one already-existing resource/data/module instance*. That is a different
+  mechanism from the block-level `for_each` deferred below, which is Terraform
+  creating multiple *instances* of a resource/data/module block. Same keyword, two
+  unrelated features — only the block-level one is out of scope.
 - **One example:** `azurerm` multi-resource wiring (resource group → service plan →
   linux web app), authored with the untyped core, emitting JSON, demonstrating
-  cross-resource references.
+  cross-resource references. `module()` usage (local-path `source`, wiring inputs/
+  outputs) is covered by a separate, dedicated contract example rather than folded
+  into this one (see usage-examples.md example 5) — still required, just not crammed
+  into the flagship snippet.
 - **Unit tests:** `vitest`, asserting emitter output (snapshots + targeted cases).
 - **Full CDKTF purge:** delete old `src/` and all three old examples; remove
   `cdktf`, `constructs`, `@cdktf/provider-azurerm`, `lodash.merge`, `zod` from deps.
@@ -62,8 +70,14 @@ Run these once before delegating any tasks — don't assume they work. Verified
 - **`emitHcl` (HCL emission)** — deferred to a later milestone. `Block` stays in the
   Block A value model now (no-op in JSON) so authoring code doesn't need to change
   when HCL emission ships.
-- `count` / `for_each`, Terraform expression engine, state/apply orchestration,
-  provider aliases, round-trip import.
+- **`count` / `for_each` as a resource/data/module block-level meta-argument** — i.e.
+  Terraform itself creating multiple instances of a block, addressed by key/index
+  (`azurerm_x.main["a"]`, `module.web["a"]`). Out of scope for `resource`, `data`,
+  **and `module`** alike; use the TypeScript-loop convention (stable derived names,
+  see the "Repetition" usage example) instead of a Terraform-native `for_each`/`count`.
+  This is unrelated to `dynamic`'s own `for_each` key, which is in scope (see above).
+- Terraform expression engine, state/apply orchestration, provider aliases,
+  round-trip import.
 - **`locals`** — no builder method this milestone. Most local-variable use cases are
   just plain TypeScript at author time; the real gap (reshaping `Ref`-bearing values
   that are only known at apply time, e.g. flattening a `for_each`-sourced module
@@ -84,7 +98,8 @@ Run these once before delegating any tasks — don't assume they work. Verified
    environment, do not mark this criterion done or skip it silently — flag it as
    unverified per the Escalation section below.**
 5. **Tests green.** `vitest` suite passes and covers: ref encoding (`"${...}"`),
-   `Block` no-op behavior, a `dynamic`-block passthrough case, array/object nesting,
+   `Block` no-op behavior, a `dynamic`-block passthrough case, `module()` wiring
+   (local-path `source` + `Addressable.attr()` on its output), array/object nesting,
    and a full-program snapshot for `emitJson`.
 6. **Public API is the intended surface.** `src/index.ts` exports exactly `TfBuilder`,
    `ref`, `Ref`, `block`, `Block`, `emitJson`, and the value types; `IR` and

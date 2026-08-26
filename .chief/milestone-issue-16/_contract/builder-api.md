@@ -36,4 +36,12 @@ export class TfBuilder {
   insertion order per kind.
 - Stable resource names are a **documented convention** (derive labels from stable keys,
   not loop indices) — NOT enforced in code.
+- `module(name, body)` is a plain named module call — `body` carries `source` (a local
+  relative path, e.g. `"../modules/webapp"`) plus whatever inputs that module expects,
+  same as any other `TfObject` body. It does **not** support block-level `count`/
+  `for_each` this milestone (same deferral as `resource`/`data`) — for multiple module
+  instances, call `module()` repeatedly with stable, derived names in a TypeScript loop
+  (see usage-examples.md's "Repetition" example) rather than a Terraform-native
+  `for_each`/`count` on the module block. Its address is always the plain
+  `module.<name>` form — no indexed (`module.x["key"]`) addressing this milestone.
 - `Addressable` and `IR` are internal; only `TfBuilder` (the class) is exported.

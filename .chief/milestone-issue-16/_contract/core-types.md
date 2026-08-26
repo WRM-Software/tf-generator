@@ -61,6 +61,10 @@ tf.resource("azurerm_linux_web_app", "web", {
   raw Terraform expression this library doesn't resolve or validate.
 - `emitJson` needs **zero special-case logic** for this — a `dynamic` key's value is
   just another nested object, encoded structurally like any other `TfObject`.
+- This `for_each` is unrelated to the resource/data/module **block-level** `for_each`
+  meta-argument (Terraform creating multiple instances of a block) — that one stays
+  out of scope this milestone. Same keyword, two different mechanisms: this one
+  repeats nested attribute blocks inside one instance that already exists.
 
 ## IR (INTERNAL — not exported)
 
