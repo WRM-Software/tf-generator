@@ -3,14 +3,14 @@
 ## `src/index.ts` exports (exact set)
 
 ```ts
-export { TerraKit } from "./TerraKit";
+export { TfBuilder } from "./TfBuilder";
 export { Ref, ref } from "./...";       // markers
 export { Block, block } from "./...";
 export { emitJson, emitHcl } from "./...";
 export type { TfPrimitive, TfValue, TfObject } from "./...";
 ```
 
-**MUST export:** `TerraKit`, `ref`, `Ref`, `block`, `Block`, `emitJson`, `emitHcl`,
+**MUST export:** `TfBuilder`, `ref`, `Ref`, `block`, `Block`, `emitJson`, `emitHcl`,
 `TfPrimitive`, `TfValue`, `TfObject`.
 
 **MUST NOT export:** `IR` (and its `NamedBlock`/`LabelBlock` helpers), `Addressable`.
@@ -23,7 +23,7 @@ export type { TfPrimitive, TfValue, TfObject } from "./...";
 - Remove devDependencies: `@cdktf/provider-azurerm`, `@types/lodash.merge`.
 - Add devDependency: `vitest`.
 - Add script: `"test": "vitest run"` (and optionally `"test:watch": "vitest"`).
-- Keep: name `terrakit`, `type: module`, existing build chain
+- Rename package to `tf-generator` (from `terrakit`); keep `type: module`, existing build chain
   (`build` / `build-esm` / `build-cjs` / `build-annotate`), `check`, `format`.
 - `main` / `module` / `types` / `exports` unchanged (still `dist/{cjs,esm,dts}`).
 - Version bump is deferred to release time (`release-it`); do not hand-edit `version`.
@@ -42,7 +42,7 @@ export type { TfPrimitive, TfValue, TfObject } from "./...";
   `.attr(...)` / handle refs.
 - Emits both `.tf` and `.tf.json`.
 - Example README documents the emit → `terraform fmt` → `terraform validate` workflow.
-- Its own `package.json` depends only on `terrakit` (+ Bun types); NO cdktf.
+- Its own `package.json` depends only on `tf-generator` (+ Bun types); NO cdktf.
 
 ## README (root)
 

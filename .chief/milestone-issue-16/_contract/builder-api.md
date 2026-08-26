@@ -1,9 +1,9 @@
 # Contract — Builder API (Block B)
 
-`TerraKit` is the single builder. Canonical reference: uploaded `terrakit.ts`.
+`TfBuilder` is the single builder. Canonical reference: uploaded `terrakit.ts`.
 
 ```ts
-export class TerraKit {
+export class TfBuilder {
   readonly ir: IR;               // internal type; property visibility per impl (not part of public d.ts surface)
 
   terraform(body: TfObject): this;                 // merges into singleton terraform {} block
@@ -36,4 +36,4 @@ export class TerraKit {
   insertion order per kind.
 - Stable resource names are a **documented convention** (derive labels from stable keys,
   not loop indices) — NOT enforced in code.
-- `Addressable` and `IR` are internal; only `TerraKit` (the class) is exported.
+- `Addressable` and `IR` are internal; only `TfBuilder` (the class) is exported.

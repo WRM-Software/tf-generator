@@ -1,15 +1,15 @@
 # Contract — End-user usage examples
 
-Canonical authoring surface as an end user of `terrakit` experiences it. These snippets
+Canonical authoring surface as an end user of `tf-generator` experiences it. These snippets
 are **normative**: the public API must make each one compile and emit the shown output.
 Only the untyped core is exercised (typed facade = Block D, a later milestone).
 
 ## 1. Minimal — one resource + output
 
 ```ts
-import { TerraKit, emitHcl, emitJson } from "terrakit";
+import { TfBuilder, emitHcl, emitJson } from "tf-generator";
 
-const tf = new TerraKit();
+const tf = new TfBuilder();
 
 const rg = tf.resource("azurerm_resource_group", "main", {
   name: "rg-app",
@@ -51,9 +51,9 @@ Note: in HCL the ref is **bare**; in JSON it is `"${...}"`. String literals are 
 ## 2. Cross-resource wiring — the flagship example (`examples/azurerm-webapp`)
 
 ```ts
-import { TerraKit, block, emitHcl } from "terrakit";
+import { TfBuilder, block, emitHcl } from "tf-generator";
 
-const tf = new TerraKit();
+const tf = new TfBuilder();
 
 tf.terraform({
   required_providers: block({
@@ -121,7 +121,7 @@ tf.output("disk_ids", { value: disks.map((d) => d.attr("id")) });
 ## 4. Variables and raw expressions (escape hatch)
 
 ```ts
-import { ref } from "terrakit";
+import { ref } from "tf-generator";
 
 const location = tf.variable("location", { type: ref("string"), default: "southeastasia" });
 
@@ -142,7 +142,7 @@ tf.resource("azurerm_resource_group", "byvar", {
 The library returns strings; writing files is the caller's responsibility (Bun/Node):
 
 ```ts
-import { emitHcl, emitJson } from "terrakit";
+import { emitHcl, emitJson } from "tf-generator";
 // Bun example
 await Bun.write("out/main.tf", emitHcl(tf));
 await Bun.write("out/main.tf.json", emitJson(tf));

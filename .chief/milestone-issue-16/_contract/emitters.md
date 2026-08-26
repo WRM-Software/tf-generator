@@ -3,8 +3,8 @@
 Both emitters read the same IR. Canonical reference: uploaded `terrakit.ts`.
 
 ```ts
-export function emitJson(tf: TerraKit): string;   // Terraform JSON (.tf.json), pretty-printed (2-space)
-export function emitHcl(tf: TerraKit): string;    // HCL (.tf)
+export function emitJson(tf: TfBuilder): string;   // Terraform JSON (.tf.json), pretty-printed (2-space)
+export function emitHcl(tf: TfBuilder): string;    // HCL (.tf)
 ```
 
 ## emitJson encoding rules
