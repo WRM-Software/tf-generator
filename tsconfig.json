@@ -26,7 +26,7 @@
     // Absolute paths
     "baseUrl": ".",
     "paths": {
-      "terrakit": ["src/index.ts"],
+      "@wrmsoftware/tf-generator": ["src/index.ts"],
     },
   }
 }
