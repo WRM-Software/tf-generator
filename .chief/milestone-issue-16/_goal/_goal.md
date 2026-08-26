@@ -16,6 +16,24 @@ emitters), proven by one real example and a unit-tested emitter. The typed facad
 (Block D) and broader example migration (Block E) are explicitly **out of scope** and
 land in later milestones.
 
+## Preflight (before starting this milestone's loop)
+
+Run these once before delegating any tasks — don't assume they work. Verified
+2026-08-26:
+
+- **`terraform` CLI availability:** `terraform version` → **OK**, v1.15.9 installed
+  at `~/.local/bin/terraform` (official HashiCorp release, checksum-verified). Also
+  confirmed reachable: `registry.terraform.io` (provider downloads for `terraform
+  init`) and `releases.hashicorp.com`. Required for success criterion 4 — if this
+  binary goes missing later, re-verify before assuming criterion 4 is checkable.
+- **Git push access:** this host has multiple `gh` accounts configured and the
+  default active one lacks access to this org; confirmed push reaches
+  `WRM-Software/tf-generator` under an account that does have access, via a dry-run
+  push (`git push --dry-run` with an explicit token header) → **OK**. Don't rely on
+  plain `git push` or `gh auth status` alone — the credential helper can silently
+  pick the wrong account even after switching the active `gh` account.
+- **`bun` availability:** `bun --version` → **OK**, 1.3.14.
+
 ## In scope
 
 - **Block A — Core value model & IR:** `Ref`, `Block`, `TfValue`/`TfObject`/`TfPrimitive`,
@@ -54,7 +72,9 @@ land in later milestones.
    Terraform JSON (refs as `"${...}"`, `Block` dropped as a no-op marker).
 4. **Example runs.** The azurerm example executes under Bun and prints/writes
    `.tf.json`; the emitted JSON passes `terraform validate` (verified manually / in CI,
-   documented in the example README).
+   documented in the example README). **If `terraform` is unavailable in the
+   environment, do not mark this criterion done or skip it silently — flag it as
+   unverified per the Escalation section below.**
 5. **Tests green.** `vitest` suite passes and covers: ref encoding (`"${...}"`),
    `Block` no-op behavior, array/object nesting, and a full-program snapshot for
    `emitJson`.
@@ -73,6 +93,16 @@ land in later milestones.
 - **Wipe & rewrite in-place**, single package; purge CDKTF deps now; monorepo deferred.
 - Keep the existing build chain (`tsc → babel esm/cjs`); rename the `terrakit` tsconfig path alias to `@wrmsoftware/tf-generator`.
 - Version: breaking major, handled at release time via `release-it` (not decided here).
+
+## Escalation on ambiguous outcomes
+
+- **Criterion 4 unverifiable** (no `terraform` CLI in the environment): stop and report
+  it as an explicit unverified/blocked item — do not mark the milestone done and do not
+  silently drop the check. A human decides whether to install `terraform`, verify
+  elsewhere, or accept the gap for this milestone.
+- **Git push preflight fails** (wrong account / no access to `WRM-Software/tf-generator`):
+  stop before making any commits and escalate — do not retry blindly or fall back to
+  force-push/alternate remotes.
 
 ## Notes
 
