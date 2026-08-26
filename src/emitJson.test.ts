@@ -4,6 +4,19 @@ import { emitJson } from './emitJson.js';
 import { ref, block } from './markers.js';
 
 describe('emitJson', () => {
+  it('does not pollute Object.prototype when a resource/data type or name is "__proto__"', () => {
+    const tf = new TfBuilder();
+    tf.resource('__proto__', '__proto__', { polluted: 'yes' });
+    tf.data('__proto__', '__proto__', { polluted: 'yes' });
+
+    const doc = JSON.parse(emitJson(tf));
+
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(doc.resource.__proto__.__proto__.polluted).toBe('yes');
+    expect(doc.data.__proto__.__proto__.polluted).toBe('yes');
+  });
+
+
   it('encodes a Ref as a ${expr} string', () => {
     const tf = new TfBuilder();
     const rg = tf.resource('azurerm_resource_group', 'main', {

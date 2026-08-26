@@ -30,8 +30,21 @@ function encodeValue(value: TfValue): unknown {
   return value;
 }
 
+/**
+ * Object/array keys assembled below (`type`, `name`, and arbitrary `TfObject`
+ * keys) come from library input, not literals we control — a key of
+ * `"__proto__"` on a plain `{}` accumulator resolves to the shared
+ * `Object.prototype` rather than a new own property, so a chained
+ * `acc[a][b] = value` write can pollute it process-wide (CWE-1321). Null-
+ * prototype accumulators make `"__proto__"` an inert, ordinary key instead;
+ * `JSON.stringify` serializes them identically to plain objects.
+ */
+function nullProtoObject<T = unknown>(): Record<string, T> {
+  return Object.create(null) as Record<string, T>;
+}
+
 function encodeObject(obj: TfObject): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
+  const out = nullProtoObject();
   for (const key of Object.keys(obj)) {
     out[key] = encodeValue(obj[key] as TfValue);
   }
@@ -51,14 +64,14 @@ function encodeObject(obj: TfObject): Record<string, unknown> {
  */
 export function emitJson(tf: TfBuilder): string {
   const ir = tf.ir;
-  const doc: Record<string, unknown> = {};
+  const doc = nullProtoObject();
 
   if (ir.terraform) {
     doc.terraform = encodeObject(ir.terraform);
   }
 
   if (ir.provider.length > 0) {
-    const provider: Record<string, unknown> = {};
+    const provider = nullProtoObject();
     for (const { name, body } of ir.provider) {
       provider[name] = encodeObject(body);
     }
@@ -66,25 +79,25 @@ export function emitJson(tf: TfBuilder): string {
   }
 
   if (ir.resource.length > 0) {
-    const resource: Record<string, Record<string, unknown>> = {};
+    const resource = nullProtoObject<Record<string, unknown>>();
     for (const { type, name, body } of ir.resource) {
-      resource[type] ??= {};
+      resource[type] ??= nullProtoObject();
       resource[type][name] = encodeObject(body);
     }
     doc.resource = resource;
   }
 
   if (ir.data.length > 0) {
-    const data: Record<string, Record<string, unknown>> = {};
+    const data = nullProtoObject<Record<string, unknown>>();
     for (const { type, name, body } of ir.data) {
-      data[type] ??= {};
+      data[type] ??= nullProtoObject();
       data[type][name] = encodeObject(body);
     }
     doc.data = data;
   }
 
   if (ir.variable.length > 0) {
-    const variable: Record<string, unknown> = {};
+    const variable = nullProtoObject();
     for (const { name, body } of ir.variable) {
       variable[name] = encodeObject(body);
     }
@@ -92,7 +105,7 @@ export function emitJson(tf: TfBuilder): string {
   }
 
   if (ir.output.length > 0) {
-    const output: Record<string, unknown> = {};
+    const output = nullProtoObject();
     for (const { name, body } of ir.output) {
       output[name] = encodeObject(body);
     }
@@ -100,7 +113,7 @@ export function emitJson(tf: TfBuilder): string {
   }
 
   if (ir.module.length > 0) {
-    const module: Record<string, unknown> = {};
+    const module = nullProtoObject();
     for (const { name, body } of ir.module) {
       module[name] = encodeObject(body);
     }
