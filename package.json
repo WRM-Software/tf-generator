@@ -21,7 +21,7 @@
     "package.json"
   ],
   "scripts": {
-    "get": "cd examples/basic && bun get",
+    "get": "cd examples/azurerm-webapp && bun install && bun run start",
     "check": "tsc -b tsconfig.json",
     "check:watch": "tsc -b tsconfig.json -w",
     "prepublishOnly": "bun run build",
@@ -54,8 +54,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/thaitype/terrakit.git"
+    "url": "https://github.com/WRM-Software/tf-generator.git"
   },
-  "homepage": "https://github.com/thaitype/terrakit",
+  "homepage": "https://github.com/WRM-Software/tf-generator",
   "license": "MIT"
 }
