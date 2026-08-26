@@ -9,7 +9,7 @@
 
 Replace the deprecated CDKTF-backed implementation with a **self-contained untyped
 core** that authors Terraform configuration in TypeScript and emits it directly as
-`.tf.json` and `.tf`. No CDKTF, no constructs, no synth engine.
+`.tf.json`. No CDKTF, no constructs, no synth engine.
 
 This milestone delivers the **A → B → C spine** end-to-end (value model/IR → builder →
 emitters), proven by one real example and a unit-tested emitter. The typed facade
@@ -22,10 +22,10 @@ land in later milestones.
   the internal `IR`, and the internal `Addressable` handle (`.address`, `.attr(path)`).
 - **Block B — Builder API:** `TfBuilder` with the full method set — `terraform`,
   `provider`, `resource`, `data`, `variable`, `output`, `module`.
-- **Block C — Emitters:** `emitJson` (structural) and `emitHcl` (quoting/escaping/block
-  rules), both reading the same IR.
+- **Block C — Emitters:** `emitJson` (structural), reading the IR. `emitHcl` is
+  deferred (see Out of scope) — JSON alone is valid, production-usable Terraform config.
 - **One example:** `azurerm` multi-resource wiring (resource group → service plan →
-  linux web app), authored with the untyped core, emitting both formats, demonstrating
+  linux web app), authored with the untyped core, emitting JSON, demonstrating
   cross-resource references.
 - **Unit tests:** `vitest`, asserting emitter output (snapshots + targeted cases).
 - **Full CDKTF purge:** delete old `src/` and all three old examples; remove
@@ -37,6 +37,9 @@ land in later milestones.
 - **Block D — Schema codegen / typed facade** (`terraform providers schema -json` → types).
 - **Block E — full example migration** beyond the single azurerm example; multi-file
   output; monorepo / separate `@wrmsoftware/tf-generator-codegen` package.
+- **`emitHcl` (HCL emission)** — deferred to a later milestone. `Block` stays in the
+  Block A value model now (no-op in JSON) so authoring code doesn't need to change
+  when HCL emission ships.
 - `count` / `for_each` / `dynamic`, Terraform expression engine, state/apply
   orchestration, provider aliases, round-trip import.
 - Running real `terraform validate` inside the unit test suite (it is a documented
@@ -47,22 +50,23 @@ land in later milestones.
 1. **CDKTF is gone.** No `cdktf`, `constructs`, `@cdktf/provider-azurerm`, `lodash.merge`,
    or `zod` in `package.json`; no import of them anywhere in `src/` or `examples/`.
 2. **Core compiles.** `bun run check` (`tsc -b`) passes with `strict` on.
-3. **Both emitters work.** Given a `TfBuilder` program, `emitJson` yields valid Terraform
-   JSON (refs as `"${...}"`) and `emitHcl` yields valid HCL (refs bare, strings quoted &
-   `${`/`%{` escaped, `Block` rendered as block syntax repeated per array element).
-4. **Example runs.** The azurerm example executes under Bun and prints/writes both `.tf`
-   and `.tf.json`; the emitted `.tf` passes `terraform fmt -check` and `terraform validate`
-   (verified manually / in CI, documented in the example README).
-5. **Tests green.** `vitest` suite passes and covers: ref bareness (HCL) vs `${}` (JSON),
-   string interpolation escaping, `Block` vs map-attribute rendering, array/object nesting,
-   and a full-program snapshot for each emitter.
+3. **The JSON emitter works.** Given a `TfBuilder` program, `emitJson` yields valid
+   Terraform JSON (refs as `"${...}"`, `Block` dropped as a no-op marker).
+4. **Example runs.** The azurerm example executes under Bun and prints/writes
+   `.tf.json`; the emitted JSON passes `terraform validate` (verified manually / in CI,
+   documented in the example README).
+5. **Tests green.** `vitest` suite passes and covers: ref encoding (`"${...}"`),
+   `Block` no-op behavior, array/object nesting, and a full-program snapshot for
+   `emitJson`.
 6. **Public API is the intended surface.** `src/index.ts` exports exactly `TfBuilder`,
-   `ref`, `Ref`, `block`, `Block`, `emitJson`, `emitHcl`, and the value types; `IR` and
+   `ref`, `Ref`, `block`, `Block`, `emitJson`, and the value types; `IR` and
    `Addressable` are **not** exported.
 
 ## Key decisions (from Phase 0 grill)
 
 - Scope = A+B+C + one example + unit tests; D and E deferred.
+- `emitHcl` deferred to a later milestone; `emitJson` alone ships (Terraform accepts
+  `.tf.json` natively, so it's production-usable on its own).
 - Test runner = **vitest**; assert emitter output; `validate` is a CI/doc step.
 - Example provider = **azurerm**, multi-resource wiring.
 - **IR is internal** — free to evolve; codegen (later) targets the builder, not the IR.

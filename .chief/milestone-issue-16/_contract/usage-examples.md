@@ -7,7 +7,7 @@ Only the untyped core is exercised (typed facade = Block D, a later milestone).
 ## 1. Minimal — one resource + output
 
 ```ts
-import { TfBuilder, emitHcl, emitJson } from "@wrmsoftware/tf-generator";
+import { TfBuilder, emitJson } from "@wrmsoftware/tf-generator";
 
 const tf = new TfBuilder();
 
@@ -18,21 +18,7 @@ const rg = tf.resource("azurerm_resource_group", "main", {
 
 tf.output("rg_id", { value: rg.attr("id") });
 
-console.log(emitHcl(tf));
 console.log(emitJson(tf));
-```
-
-Emits (HCL):
-
-```hcl
-resource "azurerm_resource_group" "main" {
-  name     = "rg-app"
-  location = "southeastasia"
-}
-
-output "rg_id" {
-  value = azurerm_resource_group.main.id
-}
 ```
 
 Emits (JSON, shape):
@@ -46,12 +32,12 @@ Emits (JSON, shape):
 }
 ```
 
-Note: in HCL the ref is **bare**; in JSON it is `"${...}"`. String literals are quoted in both.
+Note: refs always render as `"${...}"`; string literals are quoted.
 
 ## 2. Cross-resource wiring — the flagship example (`examples/azurerm-webapp`)
 
 ```ts
-import { TfBuilder, block, emitHcl } from "@wrmsoftware/tf-generator";
+import { TfBuilder, block, emitJson } from "@wrmsoftware/tf-generator";
 
 const tf = new TfBuilder();
 
@@ -86,13 +72,14 @@ const site = tf.resource("azurerm_linux_web_app", "web", {
 
 tf.output("default_hostname", { value: site.attr("default_hostname") });
 
-console.log(emitHcl(tf));
+console.log(emitJson(tf));
 ```
 
 Key points the example must demonstrate:
-- `required_providers` and `provider "azurerm" { features {} }` use `block()` (blocks, not map attrs).
-- `site_config {}` is a nested **block** via `block()`.
-- Cross-resource references flow through `handle.attr(path)` and render bare in HCL.
+- `required_providers` and `provider "azurerm" { features {} }` use `block()` — a no-op
+  in JSON this milestone, but keeps authoring code forward-compatible once `emitHcl` ships.
+- `site_config: block({})` — same forward-compatibility note.
+- Cross-resource references flow through `handle.attr(path)` and render as `"${...}"` in JSON.
 
 ## 3. Repetition — unroll in TypeScript (no count/for_each)
 
@@ -115,8 +102,8 @@ tf.output("disk_ids", { value: disks.map((d) => d.attr("id")) });
 
 - N static blocks, one per element. Labels derive from a **stable key** (`data_${z}`),
   never the loop index, so adding/removing an element does not shift addresses.
-- An array of refs (`disks.map(d => d.attr("id"))`) renders as an HCL list of bare refs
-  / a JSON array of `"${...}"` strings.
+- An array of refs (`disks.map(d => d.attr("id"))`) renders as a JSON array of
+  `"${...}"` strings.
 
 ## 4. Variables and raw expressions (escape hatch)
 
@@ -127,30 +114,29 @@ const location = tf.variable("location", { type: ref("string"), default: "southe
 
 tf.resource("azurerm_resource_group", "byvar", {
   name: "rg-byvar",
-  location,                                  // Ref -> var.location, bare in HCL
+  location,                                  // Ref -> var.location, renders "${var.location}"
   tags: { managed_by: ref("terraform.workspace") },  // raw passthrough expression
 });
 ```
 
 - `tf.variable(name, body?)` returns `Ref("var.<name>")` for direct wiring.
-- `ref(expr)` is the unchecked passthrough for any raw Terraform expression string.
-- `type: ref("string")` keeps `string`/`list(string)` etc. as bare HCL type expressions,
-  not quoted literals.
+- `ref(expr)` is the unchecked passthrough for any raw Terraform expression string;
+  it renders as `"${expr}"` in JSON.
+- `type: ref("string")` keeps `string`/`list(string)` etc. as expression refs
+  (`"${string}"` in JSON) rather than quoted literals.
 
 ## 5. Emitting to files (author's own glue — not part of the library)
 
 The library returns strings; writing files is the caller's responsibility (Bun/Node):
 
 ```ts
-import { emitHcl, emitJson } from "@wrmsoftware/tf-generator";
+import { emitJson } from "@wrmsoftware/tf-generator";
 // Bun example
-await Bun.write("out/main.tf", emitHcl(tf));
 await Bun.write("out/main.tf.json", emitJson(tf));
 ```
 
 Then, as a documented workflow (not enforced by the lib):
 
 ```sh
-terraform -chdir=out fmt
 terraform -chdir=out validate
 ```

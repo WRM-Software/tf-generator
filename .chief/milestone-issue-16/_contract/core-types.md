@@ -21,8 +21,9 @@ export const block: (body: TfObject | TfObject[]) => Block;
 ```
 
 - `Ref` wraps a Terraform address / raw expression. Detected by `instanceof Ref`.
-- `Block` forces HCL block syntax (vs map attribute). Detected by `instanceof Block`.
-  An **array** body means the block is repeated once per element.
+- `Block` forces HCL block syntax (vs map attribute) once `emitHcl` ships (deferred
+  this milestone) — currently a no-op marker for `emitJson`. Detected by
+  `instanceof Block`. An **array** body means the block is repeated once per element.
 - `_tag` fields are retained as discriminants but detection is by `instanceof`.
 
 ## Value model

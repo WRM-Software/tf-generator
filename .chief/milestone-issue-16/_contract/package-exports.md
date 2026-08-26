@@ -6,11 +6,11 @@
 export { TfBuilder } from "./TfBuilder";
 export { Ref, ref } from "./...";       // markers
 export { Block, block } from "./...";
-export { emitJson, emitHcl } from "./...";
+export { emitJson } from "./...";
 export type { TfPrimitive, TfValue, TfObject } from "./...";
 ```
 
-**MUST export:** `TfBuilder`, `ref`, `Ref`, `block`, `Block`, `emitJson`, `emitHcl`,
+**MUST export:** `TfBuilder`, `ref`, `Ref`, `block`, `Block`, `emitJson`,
 `TfPrimitive`, `TfValue`, `TfObject`.
 
 **MUST NOT export:** `IR` (and its `NamedBlock`/`LabelBlock` helpers), `Addressable`.
@@ -40,12 +40,12 @@ export type { TfPrimitive, TfValue, TfObject } from "./...";
 - Contents: azurerm multi-resource wiring — resource group → service plan →
   linux web app — authored with the untyped core, wiring cross-resource references via
   `.attr(...)` / handle refs.
-- Emits both `.tf` and `.tf.json`.
-- Example README documents the emit → `terraform fmt` → `terraform validate` workflow.
+- Emits `.tf.json` (JSON only this milestone).
+- Example README documents the emit → `terraform validate` workflow.
 - Its own `package.json` depends only on `@wrmsoftware/tf-generator` (+ Bun types); NO cdktf.
 
 ## README (root)
 
 - Rewrite to describe direct Terraform generation. Remove "Backed by CDKTF" and the
-  CDKTF-oriented feature list. Describe: author in TS → `emitJson` / `emitHcl` → plain
-  `terraform`.
+  CDKTF-oriented feature list. Describe: author in TS → `emitJson` → plain
+  `terraform` (note HCL emission as a planned follow-up, not shipped yet).
