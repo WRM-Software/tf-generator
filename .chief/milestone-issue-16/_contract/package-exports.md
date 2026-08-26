@@ -23,7 +23,7 @@ export type { TfPrimitive, TfValue, TfObject } from "./...";
 - Remove devDependencies: `@cdktf/provider-azurerm`, `@types/lodash.merge`.
 - Add devDependency: `vitest`.
 - Add script: `"test": "vitest run"` (and optionally `"test:watch": "vitest"`).
-- Rename package to `tf-generator` (from `terrakit`); keep `type: module`, existing build chain
+- Rename package to `@wrmsoftware/tf-generator` (from `terrakit`); keep `type: module`, existing build chain
   (`build` / `build-esm` / `build-cjs` / `build-annotate`), `check`, `format`.
 - `main` / `module` / `types` / `exports` unchanged (still `dist/{cjs,esm,dts}`).
 - Version bump is deferred to release time (`release-it`); do not hand-edit `version`.
@@ -42,7 +42,7 @@ export type { TfPrimitive, TfValue, TfObject } from "./...";
   `.attr(...)` / handle refs.
 - Emits both `.tf` and `.tf.json`.
 - Example README documents the emit → `terraform fmt` → `terraform validate` workflow.
-- Its own `package.json` depends only on `tf-generator` (+ Bun types); NO cdktf.
+- Its own `package.json` depends only on `@wrmsoftware/tf-generator` (+ Bun types); NO cdktf.
 
 ## README (root)
 

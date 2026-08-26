@@ -1,13 +1,13 @@
 # Contract — End-user usage examples
 
-Canonical authoring surface as an end user of `tf-generator` experiences it. These snippets
+Canonical authoring surface as an end user of `@wrmsoftware/tf-generator` experiences it. These snippets
 are **normative**: the public API must make each one compile and emit the shown output.
 Only the untyped core is exercised (typed facade = Block D, a later milestone).
 
 ## 1. Minimal — one resource + output
 
 ```ts
-import { TfBuilder, emitHcl, emitJson } from "tf-generator";
+import { TfBuilder, emitHcl, emitJson } from "@wrmsoftware/tf-generator";
 
 const tf = new TfBuilder();
 
@@ -51,7 +51,7 @@ Note: in HCL the ref is **bare**; in JSON it is `"${...}"`. String literals are 
 ## 2. Cross-resource wiring — the flagship example (`examples/azurerm-webapp`)
 
 ```ts
-import { TfBuilder, block, emitHcl } from "tf-generator";
+import { TfBuilder, block, emitHcl } from "@wrmsoftware/tf-generator";
 
 const tf = new TfBuilder();
 
@@ -121,7 +121,7 @@ tf.output("disk_ids", { value: disks.map((d) => d.attr("id")) });
 ## 4. Variables and raw expressions (escape hatch)
 
 ```ts
-import { ref } from "tf-generator";
+import { ref } from "@wrmsoftware/tf-generator";
 
 const location = tf.variable("location", { type: ref("string"), default: "southeastasia" });
 
@@ -142,7 +142,7 @@ tf.resource("azurerm_resource_group", "byvar", {
 The library returns strings; writing files is the caller's responsibility (Bun/Node):
 
 ```ts
-import { emitHcl, emitJson } from "tf-generator";
+import { emitHcl, emitJson } from "@wrmsoftware/tf-generator";
 // Bun example
 await Bun.write("out/main.tf", emitHcl(tf));
 await Bun.write("out/main.tf.json", emitJson(tf));

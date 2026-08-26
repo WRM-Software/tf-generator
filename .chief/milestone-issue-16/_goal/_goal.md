@@ -36,7 +36,7 @@ land in later milestones.
 
 - **Block D — Schema codegen / typed facade** (`terraform providers schema -json` → types).
 - **Block E — full example migration** beyond the single azurerm example; multi-file
-  output; monorepo / separate `tf-generator-codegen` package.
+  output; monorepo / separate `@wrmsoftware/tf-generator-codegen` package.
 - `count` / `for_each` / `dynamic`, Terraform expression engine, state/apply
   orchestration, provider aliases, round-trip import.
 - Running real `terraform validate` inside the unit test suite (it is a documented
@@ -67,7 +67,7 @@ land in later milestones.
 - Example provider = **azurerm**, multi-resource wiring.
 - **IR is internal** — free to evolve; codegen (later) targets the builder, not the IR.
 - **Wipe & rewrite in-place**, single package; purge CDKTF deps now; monorepo deferred.
-- Keep the existing build chain (`tsc → babel esm/cjs`); rename the `terrakit` tsconfig path alias to `tf-generator`.
+- Keep the existing build chain (`tsc → babel esm/cjs`); rename the `terrakit` tsconfig path alias to `@wrmsoftware/tf-generator`.
 - Version: breaking major, handled at release time via `release-it` (not decided here).
 
 ## Notes
