@@ -45,7 +45,8 @@ Run these once before delegating any tasks — don't assume they work. Verified
 - **Dynamic blocks:** authored directly via a `dynamic` key in any body `TfObject` — no
   new value-model primitive needed, since Terraform's own JSON syntax already treats
   `dynamic` as literal structure (`{ dynamic: { <blockName>: { for_each, content,
-  iterator? } } }`). Covered by the flagship example and a unit test. **Note:** the
+  iterator? } } }`). Covered by a unit test (success criterion 5) — not required in
+  the flagship example itself, which stays focused on cross-resource wiring. **Note:** the
   `for_each` here is `dynamic`'s own — it drives repeated nested attribute blocks
   *within one already-existing resource/data/module instance*. That is a different
   mechanism from the block-level `for_each` deferred below, which is Terraform
