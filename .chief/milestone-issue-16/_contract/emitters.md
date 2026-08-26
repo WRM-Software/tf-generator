@@ -25,6 +25,22 @@ Document assembly:
 - `variable[]`, `output[]`, `module[]` → `doc.<kind>[name] = body`
 - Output: `JSON.stringify(doc, null, 2)`.
 
+Note: `dynamic` blocks need no dedicated row above — a `dynamic` key's value is just
+another `TfObject`, encoded structurally like any other nested object. See Block A's
+`core-types.md` for the authoring pattern.
+
+## Known limitation — provider aliasing (not yet supported)
+
+The `provider[] → doc.provider[name] = body` assembly rule above assumes **one**
+provider config per name (no aliases this milestone, per Out of scope in `_goal.md`).
+That's a single-key object assignment — it silently overwrites if two provider blocks
+share the same name, which is exactly what aliasing needs. Terraform's JSON syntax
+requires an **array** per name once aliases exist:
+`"provider": { "azurerm": [ {...default}, { "alias": "x", ... } ] }`. Whoever adds
+alias support in a later milestone must change this assembly rule to build an array,
+not overwrite a single object — flagging now so it isn't a silent bug when that
+milestone lands.
+
 ## Guarantees & non-guarantees
 
 - **Guarantee:** literal vs reference is unambiguous — controlled solely by `Ref`.

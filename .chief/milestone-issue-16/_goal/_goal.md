@@ -42,6 +42,10 @@ Run these once before delegating any tasks — don't assume they work. Verified
   `provider`, `resource`, `data`, `variable`, `output`, `module`.
 - **Block C — Emitters:** `emitJson` (structural), reading the IR. `emitHcl` is
   deferred (see Out of scope) — JSON alone is valid, production-usable Terraform config.
+- **Dynamic blocks:** authored directly via a `dynamic` key in any body `TfObject` — no
+  new value-model primitive needed, since Terraform's own JSON syntax already treats
+  `dynamic` as literal structure (`{ dynamic: { <blockName>: { for_each, content,
+  iterator? } } }`). Covered by the flagship example and a unit test.
 - **One example:** `azurerm` multi-resource wiring (resource group → service plan →
   linux web app), authored with the untyped core, emitting JSON, demonstrating
   cross-resource references.
@@ -58,8 +62,12 @@ Run these once before delegating any tasks — don't assume they work. Verified
 - **`emitHcl` (HCL emission)** — deferred to a later milestone. `Block` stays in the
   Block A value model now (no-op in JSON) so authoring code doesn't need to change
   when HCL emission ships.
-- `count` / `for_each` / `dynamic`, Terraform expression engine, state/apply
-  orchestration, provider aliases, round-trip import.
+- `count` / `for_each`, Terraform expression engine, state/apply orchestration,
+  provider aliases, round-trip import.
+- **`locals`** — no builder method this milestone. Most local-variable use cases are
+  just plain TypeScript at author time; the real gap (reshaping `Ref`-bearing values
+  that are only known at apply time, e.g. flattening a `for_each`-sourced module
+  output) is deferred to a later milestone.
 - Running real `terraform validate` inside the unit test suite (it is a documented
   CI/manual step, not a unit test).
 
@@ -76,8 +84,8 @@ Run these once before delegating any tasks — don't assume they work. Verified
    environment, do not mark this criterion done or skip it silently — flag it as
    unverified per the Escalation section below.**
 5. **Tests green.** `vitest` suite passes and covers: ref encoding (`"${...}"`),
-   `Block` no-op behavior, array/object nesting, and a full-program snapshot for
-   `emitJson`.
+   `Block` no-op behavior, a `dynamic`-block passthrough case, array/object nesting,
+   and a full-program snapshot for `emitJson`.
 6. **Public API is the intended surface.** `src/index.ts` exports exactly `TfBuilder`,
    `ref`, `Ref`, `block`, `Block`, `emitJson`, and the value types; `IR` and
    `Addressable` are **not** exported.
@@ -85,6 +93,8 @@ Run these once before delegating any tasks — don't assume they work. Verified
 ## Key decisions (from Phase 0 grill)
 
 - Scope = A+B+C + one example + unit tests; D and E deferred.
+- `dynamic` blocks need no new IR primitive — Terraform's JSON syntax already treats
+  `dynamic` as literal structure; `locals` deferred (no builder method yet).
 - `emitHcl` deferred to a later milestone; `emitJson` alone ships (Terraform accepts
   `.tf.json` natively, so it's production-usable on its own).
 - Test runner = **vitest**; assert emitter output; `validate` is a CI/doc step.

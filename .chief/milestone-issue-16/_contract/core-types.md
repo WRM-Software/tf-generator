@@ -37,6 +37,31 @@ export interface TfObject { [key: string]: TfValue }
 `TfObject` is intentionally loose — no per-resource typing at this layer (that is Block D,
 a later milestone).
 
+## Dynamic blocks (no new primitive)
+
+Terraform's JSON syntax already treats `dynamic` as literal structure, so no new
+value-model class is needed. Author it directly as a `dynamic` key inside any body
+`TfObject`:
+
+```ts
+tf.resource("azurerm_linux_web_app", "web", {
+  name: "app-web",
+  // ...
+  dynamic: {
+    ip_restriction: {
+      for_each: ref("var.ip_rules"),
+      content: { ip_address: ref("ip_restriction.value.cidr") },
+    },
+  },
+});
+```
+
+- `for_each` and everything inside `content` are ordinary `TfValue`s — use `ref()` for
+  any expression, including the dynamic iterator (`<blockName>.value.<x>`), which is a
+  raw Terraform expression this library doesn't resolve or validate.
+- `emitJson` needs **zero special-case logic** for this — a `dynamic` key's value is
+  just another nested object, encoded structurally like any other `TfObject`.
+
 ## IR (INTERNAL — not exported)
 
 ```ts
