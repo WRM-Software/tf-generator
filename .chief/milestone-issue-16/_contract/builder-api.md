@@ -21,7 +21,7 @@ export class TfBuilder {
 | Method | Returns | Behavior |
 | ------ | ------- | -------- |
 | `terraform(body)` | `this` | Shallow-merges `body` into the single `terraform` block (`{...prev, ...body}`). |
-| `provider(name, body)` | `this` | Pushes `{ name, body }` to `ir.provider`. Keyed by name; alias/array form is out of scope. |
+| `provider(name, body)` | `this` | Pushes `{ name, body }` to `ir.provider`. Call repeatedly with the same `name` for aliasing (e.g. one default + one `alias`ed config) — the emitter assembles same-name entries into an array; see `emitters.md`. |
 | `resource(type, name, body)` | `Addressable(`\``${type}.${name}`\``)` | Pushes `{ type, name, body }` to `ir.resource`. |
 | `data(type, name, body)` | `Addressable(`\``data.${type}.${name}`\``)` | Pushes `{ type, name, body }` to `ir.data`. |
 | `variable(name, body?)` | `Ref("var.<name>")` | Pushes `{ name, body ?? {} }` to `ir.variable`. |

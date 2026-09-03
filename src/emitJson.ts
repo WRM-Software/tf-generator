@@ -56,11 +56,6 @@ function encodeObject(obj: TfObject): Record<string, unknown> {
  *
  * Reads `TfBuilder`'s internal IR and produces pretty-printed Terraform JSON
  * (`.tf.json`). `emitHcl` is deferred to a later milestone.
- *
- * Known limitation (see `_contract/emitters.md`): `provider[]` assembly here
- * assumes one provider config per name (no aliasing this milestone) — a
- * later milestone must switch this to array-based assembly to support
- * `alias`.
  */
 export function emitJson(tf: TfBuilder): string {
   const ir = tf.ir;
@@ -71,9 +66,19 @@ export function emitJson(tf: TfBuilder): string {
   }
 
   if (ir.provider.length > 0) {
-    const provider = nullProtoObject();
+    // Group by name first: two `tf.provider()` calls sharing a name (the
+    // default + one or more `alias`ed configs) must all survive. Terraform's
+    // JSON syntax represents that as an array per name; a name with exactly
+    // one config stays a bare object (matches pre-aliasing output).
+    const grouped = nullProtoObject<Array<Record<string, unknown>>>();
     for (const { name, body } of ir.provider) {
-      provider[name] = encodeObject(body);
+      grouped[name] ??= [];
+      grouped[name].push(encodeObject(body));
+    }
+    const provider = nullProtoObject();
+    for (const name of Object.keys(grouped)) {
+      const configs = grouped[name];
+      provider[name] = configs.length === 1 ? configs[0] : configs;
     }
     doc.provider = provider;
   }

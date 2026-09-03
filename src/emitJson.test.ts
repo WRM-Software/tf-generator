@@ -17,6 +17,21 @@ describe('emitJson', () => {
   });
 
 
+  it('groups multiple tf.provider() calls sharing a name into an array (aliasing), keeps a single config as a bare object', () => {
+    const tf = new TfBuilder();
+    tf.provider('azurerm', { features: {} });
+    tf.provider('azurerm', { alias: 'poc', features: {}, subscription_id: 'abc-123' });
+    tf.provider('random', { features: {} });
+
+    const doc = JSON.parse(emitJson(tf));
+
+    expect(doc.provider.azurerm).toEqual([
+      { features: {} },
+      { alias: 'poc', features: {}, subscription_id: 'abc-123' },
+    ]);
+    expect(doc.provider.random).toEqual({ features: {} });
+  });
+
   it('encodes a Ref as a ${expr} string', () => {
     const tf = new TfBuilder();
     const rg = tf.resource('azurerm_resource_group', 'main', {

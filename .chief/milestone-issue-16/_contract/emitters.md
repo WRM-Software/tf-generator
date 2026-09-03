@@ -20,7 +20,10 @@ export function emitJson(tf: TfBuilder): string;   // Terraform JSON (.tf.json),
 
 Document assembly:
 - `terraform` → `doc.terraform` (if present)
-- `provider[]` → `doc.provider[name] = body`
+- `provider[]` → grouped by `name`: a name with exactly one config →
+  `doc.provider[name] = body`; a name with 2+ configs (aliasing) →
+  `doc.provider[name] = [body, ...]`, one array entry per `tf.provider()` call
+  sharing that name, in call order
 - `resource[]`, `data[]` → grouped `doc.resource[type][name] = body` (and `data`)
 - `variable[]`, `output[]`, `module[]` → `doc.<kind>[name] = body`
 - Output: `JSON.stringify(doc, null, 2)`.
@@ -29,17 +32,16 @@ Note: `dynamic` blocks need no dedicated row above — a `dynamic` key's value i
 another `TfObject`, encoded structurally like any other nested object. See Block A's
 `core-types.md` for the authoring pattern.
 
-## Known limitation — provider aliasing (not yet supported)
+## Provider aliasing (supported)
 
-The `provider[] → doc.provider[name] = body` assembly rule above assumes **one**
-provider config per name (no aliases this milestone, per Out of scope in `_goal.md`).
-That's a single-key object assignment — it silently overwrites if two provider blocks
-share the same name, which is exactly what aliasing needs. Terraform's JSON syntax
-requires an **array** per name once aliases exist:
-`"provider": { "azurerm": [ {...default}, { "alias": "x", ... } ] }`. Whoever adds
-alias support in a later milestone must change this assembly rule to build an array,
-not overwrite a single object — flagging now so it isn't a silent bug when that
-milestone lands.
+Two or more `tf.provider()` calls sharing the same `name` (e.g. one unaliased default
+plus one or more `alias`ed configs) all survive in the output as an array:
+`"provider": { "azurerm": [ {...default}, { "alias": "x", ... } ] }`. A name with only
+one config still emits as a bare object, not a one-element array, to match prior
+(pre-aliasing) output. Fixed in response to WRM-Software/tf-generator#2 — a real
+downstream consumer needed an aliased provider to coexist with the default one, and
+the previous single-key-assignment assembly silently dropped whichever config came
+first.
 
 ## Guarantees & non-guarantees
 
