@@ -1,0 +1,129 @@
+import type { TfObject, TfValue } from "./values.js";
+import { Ref, Block } from "./markers.js";
+import type { TfBuilder } from "./TfBuilder.js";
+
+/**
+ * Contract — Emitters (Block C) — `emitJson` encoding rules + document assembly.
+ *
+ * Encoding rules:
+ * - `Ref` -> string `"${expr}"`.
+ * - `Block` -> its underlying object/array, marker dropped (no-op beyond
+ *   unwrapping — no HCL logic here).
+ * - array -> recursively encoded array.
+ * - object (`TfObject`) -> recursively encoded object. A `dynamic` key needs
+ *   zero special-case code — it's just another nested `TfObject`.
+ * - primitives (`string`/`number`/`boolean`/`null`) -> as-is.
+ */
+function encodeValue(value: TfValue): unknown {
+  if (value instanceof Ref) {
+    return `\${${value.expr}}`;
+  }
+  if (value instanceof Block) {
+    return encodeValue(value.body);
+  }
+  if (Array.isArray(value)) {
+    return value.map(encodeValue);
+  }
+  if (value !== null && typeof value === "object") {
+    return encodeObject(value);
+  }
+  return value;
+}
+
+/**
+ * Object/array keys assembled below (`type`, `name`, and arbitrary `TfObject`
+ * keys) come from library input, not literals we control — a key of
+ * `"__proto__"` on a plain `{}` accumulator resolves to the shared
+ * `Object.prototype` rather than a new own property, so a chained
+ * `acc[a][b] = value` write can pollute it process-wide (CWE-1321). Null-
+ * prototype accumulators make `"__proto__"` an inert, ordinary key instead;
+ * `JSON.stringify` serializes them identically to plain objects.
+ */
+function nullProtoObject<T = unknown>(): Record<string, T> {
+  return Object.create(null) as Record<string, T>;
+}
+
+function encodeObject(obj: TfObject): Record<string, unknown> {
+  const out = nullProtoObject();
+  for (const key of Object.keys(obj)) {
+    out[key] = encodeValue(obj[key] as TfValue);
+  }
+  return out;
+}
+
+/**
+ * Contract — Emitters (Block C) — document assembly.
+ *
+ * Reads `TfBuilder`'s internal IR and produces pretty-printed Terraform JSON
+ * (`.tf.json`). `emitHcl` is deferred to a later milestone.
+ */
+export function emitJson(tf: TfBuilder): string {
+  const ir = tf.ir;
+  const doc = nullProtoObject();
+
+  if (ir.terraform) {
+    doc.terraform = encodeObject(ir.terraform);
+  }
+
+  if (ir.provider.length > 0) {
+    // Group by name first: two `tf.provider()` calls sharing a name (the
+    // default + one or more `alias`ed configs) must all survive. Terraform's
+    // JSON syntax represents that as an array per name; a name with exactly
+    // one config stays a bare object (matches pre-aliasing output).
+    const grouped = nullProtoObject<Array<Record<string, unknown>>>();
+    for (const { name, body } of ir.provider) {
+      grouped[name] ??= [];
+      grouped[name].push(encodeObject(body));
+    }
+    const provider = nullProtoObject();
+    for (const name of Object.keys(grouped)) {
+      const configs = grouped[name];
+      provider[name] = configs.length === 1 ? configs[0] : configs;
+    }
+    doc.provider = provider;
+  }
+
+  if (ir.resource.length > 0) {
+    const resource = nullProtoObject<Record<string, unknown>>();
+    for (const { type, name, body } of ir.resource) {
+      resource[type] ??= nullProtoObject();
+      resource[type][name] = encodeObject(body);
+    }
+    doc.resource = resource;
+  }
+
+  if (ir.data.length > 0) {
+    const data = nullProtoObject<Record<string, unknown>>();
+    for (const { type, name, body } of ir.data) {
+      data[type] ??= nullProtoObject();
+      data[type][name] = encodeObject(body);
+    }
+    doc.data = data;
+  }
+
+  if (ir.variable.length > 0) {
+    const variable = nullProtoObject();
+    for (const { name, body } of ir.variable) {
+      variable[name] = encodeObject(body);
+    }
+    doc.variable = variable;
+  }
+
+  if (ir.output.length > 0) {
+    const output = nullProtoObject();
+    for (const { name, body } of ir.output) {
+      output[name] = encodeObject(body);
+    }
+    doc.output = output;
+  }
+
+  if (ir.module.length > 0) {
+    const module = nullProtoObject();
+    for (const { name, body } of ir.module) {
+      module[name] = encodeObject(body);
+    }
+    doc.module = module;
+  }
+
+  return JSON.stringify(doc, null, 2);
+}

@@ -1,5 +1,5 @@
 {
-  "name": "terrakit",
+  "name": "@wrmsoftware/tf-generator",
   "type": "module",
   "version": "0.6.0",
   "author": "Thada Wangthammang",
@@ -21,7 +21,7 @@
     "package.json"
   ],
   "scripts": {
-    "get": "cd examples/basic && bun get",
+    "get": "cd examples/azurerm-webapp && bun install && bun run start",
     "check": "tsc -b tsconfig.json",
     "check:watch": "tsc -b tsconfig.json -w",
     "prepublishOnly": "bun run build",
@@ -31,22 +31,22 @@
     "build": "bun format && bun build-esm && bun build-cjs && bun build-annotate",
     "build-esm": "tsc -b tsconfig.build.json",
     "build-cjs": "babel dist/esm --plugins @babel/transform-export-namespace-from --plugins @babel/transform-modules-commonjs --out-dir dist/cjs --source-maps",
-    "build-annotate": "babel dist --plugins annotate-pure-calls --out-dir dist --source-maps"
+    "build-annotate": "babel dist --plugins annotate-pure-calls --out-dir dist --source-maps",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.5",
     "@babel/core": "^7.24.5",
     "@babel/plugin-transform-export-namespace-from": "^7.24.1",
     "@babel/plugin-transform-modules-commonjs": "^7.24.1",
-    "@cdktf/provider-azurerm": "12.21.0",
     "@types/bun": "^1.2.1",
-    "@types/lodash.merge": "^4.6.9",
     "babel-plugin-annotate-pure-calls": "^0.4.0",
     "prettier": "^3.4.2",
     "release-it": "^17.3.0",
-    "constructs": "^10.4.2",
     "typescript": "^5.7.2",
-    "type-fest": "^4.33.0"
+    "type-fest": "^4.33.0",
+    "vitest": "^3.2.4"
   },
   "publishConfig": {
     "access": "public",
@@ -54,13 +54,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/thaitype/terrakit.git"
+    "url": "https://github.com/WRM-Software/tf-generator.git"
   },
-  "homepage": "https://github.com/thaitype/terrakit",
-  "dependencies": {
-    "cdktf": "^0.20.11",
-    "lodash.merge": "^4.6.2",
-    "zod": "^3.24.1"
-  },
+  "homepage": "https://github.com/WRM-Software/tf-generator",
   "license": "MIT"
 }

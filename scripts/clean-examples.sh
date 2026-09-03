@@ -2,9 +2,8 @@
 
 # Define the directories to clean
 dirs=(
-    "./examples/**/.gen"
     "./examples/**/node_modules"
-    "./examples/**/cdktf.out"
+    "./examples/**/out"
 )
 
 # Loop through and remove each directory
